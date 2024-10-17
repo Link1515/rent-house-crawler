@@ -1,0 +1,12 @@
+{
+    "name": "link1515/rent-crawler",
+    "autoload": {
+        "psr-4": {
+            "Link1515\\RentCrawler\\": "src/"
+        }
+    },
+    "require": {
+        "symfony/dom-crawler": "^5.4",
+        "symfony/css-selector": "^5.4"
+    }
+}
