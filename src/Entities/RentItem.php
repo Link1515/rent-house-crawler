@@ -1,6 +1,6 @@
 <?php
 
-namespace Link1515\RentCrawler\Entities;
+namespace Link1515\RentHouseCrawler\Entities;
 
 class RentItem
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Link1515\RentCrawler\Utils;
+namespace Link1515\RentHouseCrawler\Utils;
 
 class RegexUtils
 {

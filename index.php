@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-use Link1515\RentCrawler\Services\CrawlRentInfoService;
+use Link1515\RentHouseCrawler\Services\CrawlRentInfoService;
 use Symfony\Component\DomCrawler\Crawler;
 
 $url  = 'https://rent.591.com.tw/list?region=1&metro=162&station=4232';

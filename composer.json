@@ -1,8 +1,8 @@
 {
-    "name": "link1515/rent-crawler",
+    "name": "link1515/rent-house-crawler",
     "autoload": {
         "psr-4": {
-            "Link1515\\RentCrawler\\": "src/"
+            "Link1515\\RentHouseCrawler\\": "src/"
         }
     },
     "require": {

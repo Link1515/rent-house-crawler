@@ -1,9 +1,9 @@
 <?php
 
-namespace Link1515\RentCrawler\Services;
+namespace Link1515\RentHouseCrawler\Services;
 
-use Link1515\RentCrawler\Entities\RentItem;
-use Link1515\RentCrawler\Utils\RegexUtils;
+use Link1515\RentHouseCrawler\Entities\RentItem;
+use Link1515\RentHouseCrawler\Utils\RegexUtils;
 
 class CrawlRentInfoService
 {
