@@ -4,6 +4,7 @@ namespace Link1515\RentHouseCrawler\Services;
 
 use Link1515\RentHouseCrawler\Entities\RentItem;
 use Link1515\RentHouseCrawler\Utils\RegexUtils;
+use Symfony\Component\DomCrawler\Crawler;
 
 class CrawlHouseService
 {
@@ -14,10 +15,7 @@ class CrawlHouseService
     private const FLOOR_CHAR_SELECTOR   = '.item-info-txt:nth-child(2) > span > span > i';
     private const POSTER_SELECTOR       = '.role-name > span:nth-child(1)';
 
-    /**
-     * @var \Symfony\Component\DomCrawler\Crawler
-     */
-    private $crawler;
+    private Crawler $crawler;
 
     public function __construct($crawler)
     {
@@ -41,63 +39,41 @@ class CrawlHouseService
         });
     }
 
-    /**
-     * @param \Symfony\Component\DomCrawler\Crawler $node
-     */
-    private function getTitle($node): string
+    private function getTitle(Crawler $node): string
     {
         return $node->filter(static::TITLE_SELECTOR)->first()->text();
     }
 
-    /**
-     * @param \Symfony\Component\DomCrawler\Crawler $node
-     */
-    private function getId($node): string
+    private function getId(Crawler $node): string
     {
         $url        = $this->getUrl($node);
         $urlPartial = explode('/', $url);
         return end($urlPartial);
     }
 
-    /**
-     * @param \Symfony\Component\DomCrawler\Crawler $node
-     */
-    private function getUrl($node): string
+    private function getUrl(Crawler $node): string
     {
         return $node->filter(static::TITLE_SELECTOR)->link()->getUri();
     }
 
-    /**
-     * @param \Symfony\Component\DomCrawler\Crawler $node
-     */
-    private function getPrice($node): int
+    private function getPrice(Crawler $node): int
     {
         $price = $this->restoreTextOrder($node, static::PRICE_DIGIAL_SELECTOR);
         $price = str_replace(',', '', $price);
         return (int) $price;
     }
 
-    /**
-     * @param \Symfony\Component\DomCrawler\Crawler $node
-     */
-    private function getAddress($node): string
+    private function getAddress(Crawler $node): string
     {
         return $this->restoreTextOrder($node, static::ADDRESS_CHAR_SELECTOR);
     }
 
-    /**
-     * @param \Symfony\Component\DomCrawler\Crawler $node
-     */
-    private function getFloor($node): string
+    private function getFloor(Crawler $node): string
     {
         return $this->restoreTextOrder($node, static::FLOOR_CHAR_SELECTOR);
     }
 
-    /**
-     * @param \Symfony\Component\DomCrawler\Crawler $node
-     * @param string $selector
-     */
-    private function restoreTextOrder($node, $selector): string
+    private function restoreTextOrder(Crawler $node, string $selector): string
     {
         $orderRecorder = [];
         $node
@@ -117,7 +93,7 @@ class CrawlHouseService
         return $text;
     }
 
-    private function getPoster($node): string
+    private function getPoster(Crawler $node): string
     {
         return $node->filter(static::POSTER_SELECTOR)->first()->text();
     }
