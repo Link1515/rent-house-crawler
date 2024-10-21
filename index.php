@@ -20,6 +20,10 @@ $html = file_get_contents($url);
 
 $crawler = new Crawler($html);
 
-$crawlerRentInfoService = new CrawlHouseService($crawler);
+$crawlHouseService = new CrawlHouseService($crawler, [
+    'excludeAgent'            => true,
+    'excludeWomanOnly'        => true,
+    'excludeTopFloorAddition' => true
+]);
 
-$crawlerRentInfoService->getRentItems();
+$crawlHouseService->getRentItems();

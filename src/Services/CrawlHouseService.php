@@ -4,6 +4,7 @@ namespace Link1515\RentHouseCrawler\Services;
 
 use Link1515\RentHouseCrawler\Entities\RentItem;
 use Link1515\RentHouseCrawler\Utils\RegexUtils;
+use Link1515\RentHouseCrawler\Utils\StringUrils;
 use Symfony\Component\DomCrawler\Crawler;
 
 class CrawlHouseService
@@ -16,27 +17,45 @@ class CrawlHouseService
     private const POSTER_SELECTOR       = '.role-name > span:nth-child(1)';
 
     private Crawler $crawler;
+    private bool $excludeAgent            = true;
+    private bool $excludeManOnly          = false;
+    private bool $excludeWomanOnly        = false;
+    private bool $excludeTopFloorAddition = true;
 
-    public function __construct($crawler)
+    public function __construct(Crawler $crawler, array $options = [])
     {
-        $this->crawler = $crawler;
+        $this->crawler                 = $crawler;
+        $this->excludeAgent            = $options['excludeAgent'] ?? $this->excludeAgent;
+        $this->excludeManOnly          = $options['excludeManOnly'] ?? $this->excludeManOnly;
+        $this->excludeWomanOnly        = $options['excludeWomanOnly'] ?? $this->excludeWomanOnly;
+        $this->excludeTopFloorAddition = $options['excludeTopFloorAddition'] ?? $this->excludeTopFloorAddition;
     }
 
     public function getRentItems()
     {
-        $this->crawler->filter(static::ITEM_SELECTOR)->each(function ($node) {
-            $id      = $this->getId($node);
-            $title   = $this->getTitle($node);
-            $url     = $this->getUrl($node);
-            $price   = $this->getPrice($node);
-            $address = $this->getAddress($node);
-            $floor   = $this->getFloor($node);
-            $poster  = $this->getPoster($node);
+        $rentItems = [];
 
-            $rentItem = new RentItem($id, $title, $url, $price, $address, $floor, '', $poster);
+        $this->crawler
+            ->filter(static::ITEM_SELECTOR)
+            ->each(function ($node) use (&$rentItems) {
+                $id      = $this->getId($node);
+                $title   = $this->getTitle($node);
+                $url     = $this->getUrl($node);
+                $price   = $this->getPrice($node);
+                $address = $this->getAddress($node);
+                $floor   = $this->getFloor($node);
+                $poster  = $this->getPoster($node);
+
+                $rentItem = new RentItem($id, $title, $url, $price, $address, $floor, '', $poster);
+                array_push($rentItems, $rentItem);
+            });
+
+        $this->excludeRentItemsByOptions($rentItems);
+
+        foreach ($rentItems as $rentItem) {
             echo $rentItem;
             echo PHP_EOL;
-        });
+        }
     }
 
     private function getTitle(Crawler $node): string
@@ -96,5 +115,65 @@ class CrawlHouseService
     private function getPoster(Crawler $node): string
     {
         return $node->filter(static::POSTER_SELECTOR)->first()->text();
+    }
+
+    private function excludeRentItemsByOptions(array &$rentItems)
+    {
+        if ($this->excludeAgent) {
+            $this->excludeAgentFromRentItems($rentItems);
+        }
+        if ($this->excludeManOnly) {
+            $this->excludeManOnlyFromRentItems($rentItems);
+        }
+        if ($this->excludeWomanOnly) {
+            $this->excludeWomanOnlyFromRentItems($rentItems);
+        }
+        if ($this->excludeTopFloorAddition) {
+            $this->excludeTopFloorAdditionFromRentItems($rentItems);
+        }
+    }
+
+    private function excludeAgentFromRentItems(array &$rentItems)
+    {
+        $needle    = '仲介';
+        $rentItems = array_filter(
+            $rentItems,
+            function (RentItem $rentItem) use ($needle) {
+                return StringUrils::stringNotContain($rentItem->poster, $needle);
+            }
+        );
+    }
+
+    private function excludeWomanOnlyFromRentItems(array &$rentItems)
+    {
+        $needles   = ['限女', '女性', '女生', '租女'];
+        $rentItems = array_filter(
+            $rentItems,
+            function (RentItem $rentItem) use ($needles) {
+                return StringUrils::stringContainNone($rentItem->title, $needles);
+            }
+        );
+    }
+
+    private function excludeManOnlyFromRentItems(array &$rentItems)
+    {
+        $needles   = ['限男', '男性', '男生', '租男'];
+        $rentItems = array_filter(
+            $rentItems,
+            function (RentItem $rentItem) use ($needles) {
+                return StringUrils::stringContainNone($rentItem->title, $needles);
+            }
+        );
+    }
+
+    private function excludeTopFloorAdditionFromRentItems(array &$rentItems)
+    {
+        $needle    = '頂加';
+        $rentItems = array_filter(
+            $rentItems,
+            function (RentItem $rentItem) use ($needle) {
+                return StringUrils::stringNotContain($rentItem->floor, $needle);
+            }
+        );
     }
 }
