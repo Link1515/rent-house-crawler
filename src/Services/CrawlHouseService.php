@@ -5,7 +5,7 @@ namespace Link1515\RentHouseCrawler\Services;
 use Link1515\RentHouseCrawler\Entities\RentItem;
 use Link1515\RentHouseCrawler\Utils\RegexUtils;
 
-class CrawlRentInfoService
+class CrawlHouseService
 {
     private const ITEM_SELECTOR         = '.item';
     private const PRICE_DIGIAL_SELECTOR = '.item-info-price i';
