@@ -3,7 +3,7 @@
 require_once __DIR__ . '/vendor/autoload.php';
 
 use Link1515\RentHouseCrawler\Services\CrawlHouseService;
-use Link1515\RentHouseCrawler\Utils\UrlUtil;
+use Link1515\RentHouseCrawler\Utils\UrlUtils;
 use Symfony\Component\DomCrawler\Crawler;
 
 $baseUrl     = 'https://rent.591.com.tw/list';
@@ -15,7 +15,7 @@ $queryParams = [
     'sort'    => 'posttime_desc',
     'station' => 4232
 ];
-$url  = UrlUtil::buildUrlWithQuery($baseUrl, $queryParams);
+$url  = UrlUtils::buildUrlWithQuery($baseUrl, $queryParams);
 $html = file_get_contents($url);
 
 $crawler = new Crawler($html);

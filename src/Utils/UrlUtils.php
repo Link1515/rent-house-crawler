@@ -2,7 +2,7 @@
 
 namespace Link1515\RentHouseCrawler\Utils;
 
-class UrlUtil
+class UrlUtils
 {
     public static function buildUrlWithQuery(string $url, array $queryParms = [])
     {
