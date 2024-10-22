@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/bootstrap.php';
 
 use Link1515\RentHouseCrawler\Services\CrawlHouseService;
 use Link1515\RentHouseCrawler\Utils\UrlUtils;
@@ -26,4 +26,6 @@ $crawlHouseService = new CrawlHouseService($crawler, [
     'excludeTopFloorAddition' => true
 ]);
 
-$crawlHouseService->getRentItems();
+$rentItems = $crawlHouseService->getRentItems();
+
+echo count($rentItems);
