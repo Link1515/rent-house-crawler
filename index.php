@@ -2,6 +2,8 @@
 
 require_once __DIR__ . '/bootstrap.php';
 
+use Link1515\RentHouseCrawler\DB;
+use Link1515\RentHouseCrawler\Repositories\HouseRepository;
 use Link1515\RentHouseCrawler\Services\CrawlHouseService;
 use Link1515\RentHouseCrawler\Utils\UrlUtils;
 use Symfony\Component\DomCrawler\Crawler;
@@ -18,14 +20,18 @@ $queryParams = [
 $url  = UrlUtils::buildUrlWithQuery($baseUrl, $queryParams);
 $html = file_get_contents($url);
 
-$crawler = new Crawler($html);
+$crawler         = new Crawler($html);
+$pdo             = DB::getPDO();
+$houseRepository = new HouseRepository($pdo);
 
-$crawlHouseService = new CrawlHouseService($crawler, [
-    'excludeAgent'            => true,
-    'excludeWomanOnly'        => true,
-    'excludeTopFloorAddition' => true
-]);
+$crawlHouseService = new CrawlHouseService(
+    $houseRepository,
+    $crawler,
+    [
+        'excludeAgent'            => true,
+        'excludeWomanOnly'        => true,
+        'excludeTopFloorAddition' => true
+    ]
+);
 
-$houses = $crawlHouseService->getHouses();
-
-echo count($houses);
+$crawlHouseService->crawl();

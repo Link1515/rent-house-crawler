@@ -3,6 +3,8 @@
 namespace Link1515\RentHouseCrawler\Services;
 
 use Link1515\RentHouseCrawler\Entities\House;
+use Link1515\RentHouseCrawler\Repositories\HouseRepository;
+use Link1515\RentHouseCrawler\Services\MessageService;
 use Link1515\RentHouseCrawler\Utils\RegexUtils;
 use Link1515\RentHouseCrawler\Utils\StringUrils;
 use Symfony\Component\DomCrawler\Crawler;
@@ -17,21 +19,53 @@ class CrawlHouseService
     private const POSTER_SELECTOR       = '.role-name > span:nth-child(1)';
 
     private Crawler $crawler;
+    private HouseRepository $houseRepository;
     private bool $excludeAgent            = true;
     private bool $excludeManOnly          = false;
     private bool $excludeWomanOnly        = false;
     private bool $excludeTopFloorAddition = true;
 
-    public function __construct(Crawler $crawler, array $options = [])
+    public function __construct(HouseRepository $houseRepository, Crawler $crawler, array $options = [])
     {
         $this->crawler                 = $crawler;
+        $this->houseRepository         = $houseRepository;
         $this->excludeAgent            = $options['excludeAgent'] ?? $this->excludeAgent;
         $this->excludeManOnly          = $options['excludeManOnly'] ?? $this->excludeManOnly;
         $this->excludeWomanOnly        = $options['excludeWomanOnly'] ?? $this->excludeWomanOnly;
         $this->excludeTopFloorAddition = $options['excludeTopFloorAddition'] ?? $this->excludeTopFloorAddition;
     }
 
-    public function getHouses(): array
+    public function crawl(): void
+    {
+        $houses = $this->crawlHouses();
+
+        $storedHouseIds = $this->houseRepository->getAllHouseIds();
+        if (empty($storedHouseIds)) {
+            $this->houseRepository->insertHouses($houses);
+            return;
+        }
+
+        $newHouses = $this->getNewHouses($houses, $storedHouseIds);
+        foreach ($newHouses as $house) {
+            MessageService::sendHouseMessage($house);
+        }
+
+        $this->houseRepository->truncateHousesTable();
+        $this->houseRepository->insertHouses($houses);
+    }
+
+    private function getNewHouses($houses, $storedHouseIds): array
+    {
+        $currentHouseIds = array_column($houses, 'id');
+        $newHouseIds     = array_diff($currentHouseIds, $storedHouseIds);
+        $newHouses       = array_filter($houses, function (House $house) use ($newHouseIds) {
+            return in_array($house->id, $newHouseIds);
+        });
+
+        return $newHouses;
+    }
+
+    private function crawlHouses(): array
     {
         $houses = [];
 
@@ -60,11 +94,11 @@ class CrawlHouseService
         return $node->filter(static::TITLE_SELECTOR)->first()->text();
     }
 
-    private function getId(Crawler $node): string
+    private function getId(Crawler $node): int
     {
         $url        = $this->getUrl($node);
         $urlPartial = explode('/', $url);
-        return end($urlPartial);
+        return (int) end($urlPartial);
     }
 
     private function getUrl(Crawler $node): string
@@ -165,7 +199,7 @@ class CrawlHouseService
 
     private function excludeTopFloorAdditionFromHouse(array &$houses)
     {
-        $needle = '頂加';
+        $needle = '頂樓加蓋';
         $houses = array_filter(
             $houses,
             function (House $house) use ($needle) {
