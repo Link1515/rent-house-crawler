@@ -2,7 +2,7 @@
 
 namespace Link1515\RentHouseCrawler\Entities;
 
-class RentItem
+class House
 {
     public function __construct(
         public string $id,

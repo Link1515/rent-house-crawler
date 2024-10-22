@@ -26,6 +26,6 @@ $crawlHouseService = new CrawlHouseService($crawler, [
     'excludeTopFloorAddition' => true
 ]);
 
-$rentItems = $crawlHouseService->getRentItems();
+$houses = $crawlHouseService->getHouses();
 
-echo count($rentItems);
+echo count($houses);

@@ -2,7 +2,7 @@
 
 namespace Link1515\RentHouseCrawler\Services;
 
-use Link1515\RentHouseCrawler\Entities\RentItem;
+use Link1515\RentHouseCrawler\Entities\House;
 use Link1515\RentHouseCrawler\Utils\RegexUtils;
 use Link1515\RentHouseCrawler\Utils\StringUrils;
 use Symfony\Component\DomCrawler\Crawler;
@@ -31,13 +31,13 @@ class CrawlHouseService
         $this->excludeTopFloorAddition = $options['excludeTopFloorAddition'] ?? $this->excludeTopFloorAddition;
     }
 
-    public function getRentItems()
+    public function getHouses(): array
     {
-        $rentItems = [];
+        $houses = [];
 
         $this->crawler
             ->filter(static::ITEM_SELECTOR)
-            ->each(function ($node) use (&$rentItems) {
+            ->each(function ($node) use (&$houses) {
                 $id      = $this->getId($node);
                 $title   = $this->getTitle($node);
                 $url     = $this->getUrl($node);
@@ -46,16 +46,13 @@ class CrawlHouseService
                 $floor   = $this->getFloor($node);
                 $poster  = $this->getPoster($node);
 
-                $rentItem = new RentItem($id, $title, $url, $price, $address, $floor, '', $poster);
-                array_push($rentItems, $rentItem);
+                $house = new House($id, $title, $url, $price, $address, $floor, '', $poster);
+                array_push($houses, $house);
             });
 
-        $this->excludeRentItemsByOptions($rentItems);
+        $this->excludeHousesByOptions($houses);
 
-        foreach ($rentItems as $rentItem) {
-            echo $rentItem;
-            echo PHP_EOL;
-        }
+        return $houses;
     }
 
     private function getTitle(Crawler $node): string
@@ -117,62 +114,62 @@ class CrawlHouseService
         return $node->filter(static::POSTER_SELECTOR)->first()->text();
     }
 
-    private function excludeRentItemsByOptions(array &$rentItems)
+    private function excludeHousesByOptions(array &$houses)
     {
         if ($this->excludeAgent) {
-            $this->excludeAgentFromRentItems($rentItems);
+            $this->excludeAgentFromHouses($houses);
         }
         if ($this->excludeManOnly) {
-            $this->excludeManOnlyFromRentItems($rentItems);
+            $this->excludeManOnlyFromHouses($houses);
         }
         if ($this->excludeWomanOnly) {
-            $this->excludeWomanOnlyFromRentItems($rentItems);
+            $this->excludeWomanOnlyFromHouses($houses);
         }
         if ($this->excludeTopFloorAddition) {
-            $this->excludeTopFloorAdditionFromRentItems($rentItems);
+            $this->excludeTopFloorAdditionFromHouse($houses);
         }
     }
 
-    private function excludeAgentFromRentItems(array &$rentItems)
+    private function excludeAgentFromHouses(array &$houses)
     {
-        $needle    = '仲介';
-        $rentItems = array_filter(
-            $rentItems,
-            function (RentItem $rentItem) use ($needle) {
-                return StringUrils::stringNotContain($rentItem->poster, $needle);
+        $needle = '仲介';
+        $houses = array_filter(
+            $houses,
+            function (House $house) use ($needle) {
+                return StringUrils::stringNotContain($house->poster, $needle);
             }
         );
     }
 
-    private function excludeWomanOnlyFromRentItems(array &$rentItems)
+    private function excludeWomanOnlyFromHouses(array &$houses)
     {
-        $needles   = ['限女', '女性', '女生', '租女'];
-        $rentItems = array_filter(
-            $rentItems,
-            function (RentItem $rentItem) use ($needles) {
-                return StringUrils::stringContainNone($rentItem->title, $needles);
+        $needles = ['限女', '女性', '女生', '租女'];
+        $houses  = array_filter(
+            $houses,
+            function (House $house) use ($needles) {
+                return StringUrils::stringContainNone($house->title, $needles);
             }
         );
     }
 
-    private function excludeManOnlyFromRentItems(array &$rentItems)
+    private function excludeManOnlyFromHouses(array &$houses)
     {
-        $needles   = ['限男', '男性', '男生', '租男'];
-        $rentItems = array_filter(
-            $rentItems,
-            function (RentItem $rentItem) use ($needles) {
-                return StringUrils::stringContainNone($rentItem->title, $needles);
+        $needles = ['限男', '男性', '男生', '租男'];
+        $houses  = array_filter(
+            $houses,
+            function (House $house) use ($needles) {
+                return StringUrils::stringContainNone($house->title, $needles);
             }
         );
     }
 
-    private function excludeTopFloorAdditionFromRentItems(array &$rentItems)
+    private function excludeTopFloorAdditionFromHouse(array &$houses)
     {
-        $needle    = '頂加';
-        $rentItems = array_filter(
-            $rentItems,
-            function (RentItem $rentItem) use ($needle) {
-                return StringUrils::stringNotContain($rentItem->floor, $needle);
+        $needle = '頂加';
+        $houses = array_filter(
+            $houses,
+            function (House $house) use ($needle) {
+                return StringUrils::stringNotContain($house->floor, $needle);
             }
         );
     }
