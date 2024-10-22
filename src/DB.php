@@ -6,9 +6,19 @@ use PDO;
 
 class DB
 {
+    private static ?PDO $pdo = null;
+
+    private function __construct()
+    {
+    }
+
     public static function getPDO(): PDO
     {
-        $pdo = new PDO(
+        if (self::$pdo) {
+            return self::$pdo;
+        }
+
+        self::$pdo = new PDO(
             "{$_ENV['DB_DRIVER']}:host={$_ENV['DB_HOST']};dbname={$_ENV['DB_DATABASE']}",
             $_ENV['DB_USERNAME'],
             $_ENV['DB_PASSWORD'],
@@ -18,6 +28,7 @@ class DB
                 PDO::ATTR_EMULATE_PREPARES   => false
             ]
         );
-        return $pdo;
+
+        return self::$pdo;
     }
 }
