@@ -10,6 +10,7 @@ try {
 
     $houseRepository = new HouseRepository($pdo);
     $houseRepository->createHousesTable();
+    $houseRepository->truncateHousesTable();
 
     echo "Table 'houses' created successfully.";
 } catch (PDOException $e) {
