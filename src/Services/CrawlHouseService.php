@@ -74,13 +74,12 @@ class CrawlHouseService
             ->each(function ($node) use (&$houses) {
                 $id      = $this->getId($node);
                 $title   = $this->getTitle($node);
-                $url     = $this->getUrl($node);
                 $price   = $this->getPrice($node);
                 $address = $this->getAddress($node);
                 $floor   = $this->getFloor($node);
                 $poster  = $this->getPoster($node);
 
-                $house = new House($id, $title, $url, $price, $address, $floor, '', $poster);
+                $house = new House($id, $title, $price, $address, $floor, '', $poster);
                 array_push($houses, $house);
             });
 
@@ -96,14 +95,9 @@ class CrawlHouseService
 
     private function getId(Crawler $node): int
     {
-        $url        = $this->getUrl($node);
+        $url = $node->filter(static::TITLE_SELECTOR)->link()->getUri();
         $urlPartial = explode('/', $url);
         return (int) end($urlPartial);
-    }
-
-    private function getUrl(Crawler $node): string
-    {
-        return $node->filter(static::TITLE_SELECTOR)->link()->getUri();
     }
 
     private function getPrice(Crawler $node): int

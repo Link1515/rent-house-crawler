@@ -7,7 +7,6 @@ class House
     public function __construct(
         public int $id,
         public string $title,
-        public string $url,
         public int $price,
         public string $address,
         public string $floor,
@@ -16,13 +15,17 @@ class House
     ) {
     }
 
+    public function getLink(): string
+    {
+        return "https://rent.591.com.tw/{$this->id}";
+    }
+
     public function __toString()
     {
         return
             <<<String
             id:      {$this->id}
             title:   {$this->title}
-            url:     {$this->url}
             price:   {$this->price}
             address: {$this->address}
             floor:   {$this->floor}
