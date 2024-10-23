@@ -22,7 +22,7 @@ $html = file_get_contents($url);
 
 $crawler         = new Crawler($html);
 $pdo             = DB::getPDO();
-$houseRepository = new HouseRepository($pdo);
+$houseRepository = new HouseRepository($pdo, 'houses');
 
 $crawlHouseService = new CrawlHouseService(
     $houseRepository,
