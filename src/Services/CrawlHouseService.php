@@ -11,14 +11,17 @@ use Symfony\Component\DomCrawler\Crawler;
 
 class CrawlHouseService
 {
-    private const ITEM_SELECTOR         = '.item';
-    private const PRICE_DIGIAL_SELECTOR = '.item-info-price i';
-    private const TITLE_SELECTOR        = '.item-info-title a';
-    private const ADDRESS_CHAR_SELECTOR = '.item-info-txt:nth-child(3) > span > span > i';
-    private const FLOOR_CHAR_SELECTOR   = '.item-info-txt:nth-child(2) > span > span > i';
-    private const POSTER_SELECTOR       = '.role-name > span:nth-child(1)';
+    private const ITEM_SELECTOR               = '.item';
+    private const PRICE_DIGIAL_SELECTOR       = '.item-info-price i';
+    private const TITLE_SELECTOR              = '.item-info-title a';
+    private const ADDRESS_CHAR_SELECTOR       = '.item-info-txt:nth-child(3) > span > span > i';
+    private const FLOOR_CHAR_SELECTOR         = '.item-info-txt:nth-child(2) > span > span > i';
+    private const POSTER_SELECTOR             = '.role-name > span:nth-child(1)';
+    private const DETAIL_DESCRIPTION_SELECTOR = '.house-condition-content .article';
+    private const DETAIL_IMAGES_SELECTOR      = '.common-img';
 
     private Crawler $crawler;
+    private Crawler $detailCrawler;
     private HouseRepository $houseRepository;
     private bool $excludeAgent            = true;
     private bool $excludeManOnly          = false;
@@ -206,5 +209,32 @@ class CrawlHouseService
                 return StringUrils::stringNotContain($house->floor, $needle);
             }
         );
+    }
+
+    private function setDetailCrawler(string $url)
+    {
+        $this->detailCrawler = $this->createCrawler($url);
+    }
+
+    private function getDetailDescription(): string
+    {
+        $description = $this->detailCrawler
+            ->filter(static::DETAIL_DESCRIPTION_SELECTOR)
+            ->text();
+        $description = str_replace('<br>', "\n", $description);
+        return $description;
+    }
+
+    private function getDetailImages(): string
+    {
+        $images = [];
+        $this->detailCrawler->filter('.common-img')->each(function ($node) use (&$images) {
+            $src = $node->attr('data-src');
+            if (str_contains($src, 'no-photo-new.png')) {
+                return;
+            }
+            array_push($images, $src);
+        });
+        return join(',', $images);
     }
 }
