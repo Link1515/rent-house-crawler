@@ -6,7 +6,6 @@ use Link1515\RentHouseCrawler\DB;
 use Link1515\RentHouseCrawler\Repositories\HouseRepository;
 use Link1515\RentHouseCrawler\Services\CrawlHouseService;
 use Link1515\RentHouseCrawler\Utils\UrlUtils;
-use Symfony\Component\DomCrawler\Crawler;
 
 $baseUrl     = 'https://rent.591.com.tw/list';
 $queryParams = [
@@ -17,16 +16,13 @@ $queryParams = [
     'sort'    => 'posttime_desc',
     'station' => 4232
 ];
-$url  = UrlUtils::buildUrlWithQuery($baseUrl, $queryParams);
-$html = file_get_contents($url);
+$url = UrlUtils::buildUrlWithQuery($baseUrl, $queryParams);
 
-$crawler         = new Crawler($html);
-$pdo             = DB::getPDO();
-$houseRepository = new HouseRepository($pdo, 'houses');
+$houseRepository = new HouseRepository(DB::getPDO(), 'houses');
 
 $crawlHouseService = new CrawlHouseService(
     $houseRepository,
-    $crawler,
+    $url,
     [
         'excludeAgent'            => true,
         'excludeWomanOnly'        => true,

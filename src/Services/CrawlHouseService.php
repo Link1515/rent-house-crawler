@@ -25,9 +25,9 @@ class CrawlHouseService
     private bool $excludeWomanOnly        = false;
     private bool $excludeTopFloorAddition = true;
 
-    public function __construct(HouseRepository $houseRepository, Crawler $crawler, array $options = [])
+    public function __construct(HouseRepository $houseRepository, string $url, array $options = [])
     {
-        $this->crawler                 = $crawler;
+        $this->crawler                 = $this->createCrawler($url);
         $this->houseRepository         = $houseRepository;
         $this->excludeAgent            = $options['excludeAgent'] ?? $this->excludeAgent;
         $this->excludeManOnly          = $options['excludeManOnly'] ?? $this->excludeManOnly;
@@ -52,6 +52,12 @@ class CrawlHouseService
 
         $this->houseRepository->truncateHousesTable();
         $this->houseRepository->insertHouses($houses);
+    }
+
+    private function createCrawler($url): Crawler
+    {
+        $html = file_get_contents($url);
+        return new Crawler($html);
     }
 
     private function getNewHouses($houses, $storedHouseIds): array
@@ -95,7 +101,7 @@ class CrawlHouseService
 
     private function getId(Crawler $node): int
     {
-        $url = $node->filter(static::TITLE_SELECTOR)->link()->getUri();
+        $url        = $node->filter(static::TITLE_SELECTOR)->link()->getUri();
         $urlPartial = explode('/', $url);
         return (int) end($urlPartial);
     }
