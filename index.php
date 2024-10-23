@@ -7,7 +7,6 @@ use Link1515\RentHouseCrawler\Repositories\HouseRepository;
 use Link1515\RentHouseCrawler\Services\CrawlHouseService;
 use Link1515\RentHouseCrawler\Utils\UrlUtils;
 
-$baseUrl     = 'https://rent.591.com.tw/list';
 $queryParams = [
     'region'  => 1,
     'metro'   => 162,
@@ -16,7 +15,7 @@ $queryParams = [
     'sort'    => 'posttime_desc',
     'station' => 4232
 ];
-$url = UrlUtils::buildUrlWithQuery($baseUrl, $queryParams);
+$url = UrlUtils::getHouseListUrl($queryParams);
 
 $houseRepository = new HouseRepository(DB::getPDO(), 'houses');
 

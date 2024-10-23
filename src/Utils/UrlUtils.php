@@ -4,6 +4,13 @@ namespace Link1515\RentHouseCrawler\Utils;
 
 class UrlUtils
 {
+    public const HOUSE_RENT_URL = 'https://rent.591.com.tw';
+
+    public static function getHouseListUrl($queryParams): string
+    {
+        return self::buildUrlWithQuery(self::HOUSE_RENT_URL . '/list', $queryParams);
+    }
+
     public static function buildUrlWithQuery(string $url, array $queryParms = [])
     {
         $url         = self::getCleanUrl($url);
