@@ -90,7 +90,7 @@ class CrawlHouseService
         $houses = [];
 
         $this->crawler
-            ->filter(static::ITEM_SELECTOR)
+            ->filter(self::ITEM_SELECTOR)
             ->each(function ($node) use (&$houses) {
                 $id      = $this->getId($node);
                 $title   = $this->getTitle($node);
@@ -110,31 +110,31 @@ class CrawlHouseService
 
     private function getTitle(Crawler $node): string
     {
-        return $node->filter(static::TITLE_SELECTOR)->first()->text();
+        return $node->filter(self::TITLE_SELECTOR)->first()->text();
     }
 
     private function getId(Crawler $node): int
     {
-        $url        = $node->filter(static::TITLE_SELECTOR)->link()->getUri();
+        $url        = $node->filter(self::TITLE_SELECTOR)->link()->getUri();
         $urlPartial = explode('/', $url);
         return (int) end($urlPartial);
     }
 
     private function getPrice(Crawler $node): int
     {
-        $price = $this->restoreTextOrder($node, static::PRICE_DIGIAL_SELECTOR);
+        $price = $this->restoreTextOrder($node, self::PRICE_DIGIAL_SELECTOR);
         $price = str_replace(',', '', $price);
         return (int) $price;
     }
 
     private function getAddress(Crawler $node): string
     {
-        return $this->restoreTextOrder($node, static::ADDRESS_CHAR_SELECTOR);
+        return $this->restoreTextOrder($node, self::ADDRESS_CHAR_SELECTOR);
     }
 
     private function getFloor(Crawler $node): string
     {
-        return $this->restoreTextOrder($node, static::FLOOR_CHAR_SELECTOR);
+        return $this->restoreTextOrder($node, self::FLOOR_CHAR_SELECTOR);
     }
 
     private function restoreTextOrder(Crawler $node, string $selector): string
@@ -159,7 +159,7 @@ class CrawlHouseService
 
     private function getPoster(Crawler $node): string
     {
-        return $node->filter(static::POSTER_SELECTOR)->first()->text();
+        return $node->filter(self::POSTER_SELECTOR)->first()->text();
     }
 
     private function excludeHousesByOptions(array &$houses)
@@ -244,7 +244,7 @@ class CrawlHouseService
     private function getDetailDescription(): string
     {
         $description = $this->detailCrawler
-            ->filter(static::DETAIL_DESCRIPTION_SELECTOR)
+            ->filter(self::DETAIL_DESCRIPTION_SELECTOR)
             ->html();
         $description = StringUrils::brToLineBreak($description);
         $description = strip_tags($description);
