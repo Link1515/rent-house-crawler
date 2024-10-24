@@ -28,6 +28,7 @@ class CrawlHouseService
     private bool $excludeManOnly          = false;
     private bool $excludeWomanOnly        = false;
     private bool $excludeTopFloorAddition = true;
+    private bool $excludeBasement         = true;
 
     public function __construct(HouseRepository $houseRepository, string $url, array $options = [])
     {
@@ -37,6 +38,7 @@ class CrawlHouseService
         $this->excludeManOnly          = $options['excludeManOnly'] ?? $this->excludeManOnly;
         $this->excludeWomanOnly        = $options['excludeWomanOnly'] ?? $this->excludeWomanOnly;
         $this->excludeTopFloorAddition = $options['excludeTopFloorAddition'] ?? $this->excludeTopFloorAddition;
+        $this->excludeBasement         = $options['excludeBasement'] ?? $this->excludeBasement;
     }
 
     public function crawl(): void
@@ -170,6 +172,9 @@ class CrawlHouseService
         if ($this->excludeTopFloorAddition) {
             $this->excludeTopFloorAdditionFromHouse($houses);
         }
+        if ($this->excludeBasement) {
+            $this->excludeBasementFromHouse($houses);
+        }
     }
 
     private function excludeAgentFromHouses(array &$houses)
@@ -208,6 +213,17 @@ class CrawlHouseService
     private function excludeTopFloorAdditionFromHouse(array &$houses)
     {
         $needle = '頂樓加蓋';
+        $houses = array_filter(
+            $houses,
+            function (House $house) use ($needle) {
+                return StringUrils::stringNotContain($house->floor, $needle);
+            }
+        );
+    }
+
+    private function excludeBasementFromHouse(array &$houses)
+    {
+        $needle = 'B';
         $houses = array_filter(
             $houses,
             function (House $house) use ($needle) {

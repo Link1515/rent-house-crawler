@@ -23,9 +23,7 @@ $crawlHouseService = new CrawlHouseService(
     $houseRepository,
     $url,
     [
-        'excludeAgent'            => true,
-        'excludeWomanOnly'        => true,
-        'excludeTopFloorAddition' => true
+        'excludeWomanOnly' => true,
     ]
 );
 
