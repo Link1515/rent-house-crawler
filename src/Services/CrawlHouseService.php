@@ -99,7 +99,7 @@ class CrawlHouseService
                 $floor   = $this->getFloor($node);
                 $poster  = $this->getPoster($node);
 
-                $house = new House($id, $title, $price, $address, $floor, '', $poster);
+                $house = new House($id, $title, $price, $address, $floor, $poster);
                 array_push($houses, $house);
             });
 

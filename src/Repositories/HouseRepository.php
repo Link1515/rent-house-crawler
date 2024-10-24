@@ -12,7 +12,7 @@ class HouseRepository
 
     public function __construct(PDO $pdo, string $tableName)
     {
-        $this->pdo = $pdo;
+        $this->pdo       = $pdo;
         $this->tableName = $tableName;
 
         if (!$this->tableExists()) {
@@ -22,7 +22,7 @@ class HouseRepository
 
     public function tableExists(): bool
     {
-        $sql = "SHOW TABLES LIKE '{$this->tableName}'";
+        $sql    = "SHOW TABLES LIKE '{$this->tableName}'";
         $result = $this->pdo->query($sql);
         return $result->rowCount() > 0;
     }
@@ -36,7 +36,6 @@ class HouseRepository
                 price int NOT NULL,
                 address varchar(255) NOT NULL,
                 floor varchar(255) NOT NULL,
-                description text NULL,
                 poster varchar(255) NOT NULL,
                 CONSTRAINT houses_pk PRIMARY KEY (id)
             ) ENGINE=InnoDB
@@ -66,17 +65,16 @@ class HouseRepository
     {
         $result = $this->pdo->prepare(
             "INSERT INTO 
-                        `{$this->tableName}` (id, title, price, address, floor, description, poster) 
+                        `{$this->tableName}` (id, title, price, address, floor, poster) 
                     VALUES 
-                        (:id, :title, :price, :address, :floor, :description, :poster)"
+                        (:id, :title, :price, :address, :floor, :poster)"
         )->execute([
-            'id'          => $house->id,
-            'title'       => $house->title,
-            'price'       => $house->price,
-            'address'     => $house->address,
-            'floor'       => $house->floor,
-            'description' => $house->description,
-            'poster'      => $house->poster,
+            'id'      => $house->id,
+            'title'   => $house->title,
+            'price'   => $house->price,
+            'address' => $house->address,
+            'floor'   => $house->floor,
+            'poster'  => $house->poster,
         ]);
 
         return $result;
@@ -84,9 +82,9 @@ class HouseRepository
 
     public function insertHouses(array $houses)
     {
-        $sql = "INSERT INTO `{$this->tableName}` (id, title, price, address, floor, description, poster) VALUES ";
+        $sql = "INSERT INTO `{$this->tableName}` (id, title, price, address, floor, poster) VALUES ";
         foreach ($houses as $house) {
-            $sql .= "({$house->id}, '{$house->title}', {$house->price}, '{$house->address}', '{$house->floor}', '{$house->description}', '{$house->poster}'), ";
+            $sql .= "({$house->id}, '{$house->title}', {$house->price}, '{$house->address}', '{$house->floor}', '{$house->poster}'), ";
         }
         $sql = substr($sql, 0, -2);
 

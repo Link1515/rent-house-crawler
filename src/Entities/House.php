@@ -10,7 +10,6 @@ class House
         public int $price,
         public string $address,
         public string $floor,
-        public string $description,
         public string $poster
     ) {
     }
