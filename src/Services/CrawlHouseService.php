@@ -49,8 +49,12 @@ class CrawlHouseService
         }
 
         $newHouses = $this->getNewHouses($houses, $storedHouseIds);
+        /** @var House $house */
         foreach ($newHouses as $house) {
-            MessageService::sendHouseMessage($house);
+            $this->setDetailCrawler($house->getLink());
+            $description = $this->getDetailDescription();
+            $images      = $this->getDetailImages();
+            MessageService::sendHouseMessage($house, $description, $images);
         }
 
         $this->houseRepository->truncateHousesTable();
@@ -220,12 +224,15 @@ class CrawlHouseService
     {
         $description = $this->detailCrawler
             ->filter(static::DETAIL_DESCRIPTION_SELECTOR)
-            ->text();
-        $description = str_replace('<br>', "\n", $description);
+            ->html();
+        $description = StringUrils::brToLineBreak($description);
+        $description = strip_tags($description);
+        $description = StringUrils::clearAbnormalSpace($description);
+
         return $description;
     }
 
-    private function getDetailImages(): string
+    private function getDetailImages(): array
     {
         $images = [];
         $this->detailCrawler->filter('.common-img')->each(function ($node) use (&$images) {
@@ -235,6 +242,6 @@ class CrawlHouseService
             }
             array_push($images, $src);
         });
-        return join(',', $images);
+        return $images;
     }
 }
