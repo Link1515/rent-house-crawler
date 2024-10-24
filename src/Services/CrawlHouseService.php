@@ -19,6 +19,7 @@ class CrawlHouseService
     private const POSTER_SELECTOR             = '.role-name > span:nth-child(1)';
     private const DETAIL_DESCRIPTION_SELECTOR = '.house-condition-content .article';
     private const DETAIL_IMAGES_SELECTOR      = '.common-img';
+    private const DETAIL_IMAGES_PLACEHOLDER   = 'no-photo-new.png';
 
     private Crawler $crawler;
     private Crawler $detailCrawler;
@@ -235,9 +236,9 @@ class CrawlHouseService
     private function getDetailImages(): array
     {
         $images = [];
-        $this->detailCrawler->filter('.common-img')->each(function ($node) use (&$images) {
+        $this->detailCrawler->filter(self::DETAIL_IMAGES_SELECTOR)->each(function ($node) use (&$images) {
             $src = $node->attr('data-src');
-            if (str_contains($src, 'no-photo-new.png')) {
+            if (str_contains($src, self::DETAIL_IMAGES_PLACEHOLDER)) {
                 return;
             }
             array_push($images, $src);
