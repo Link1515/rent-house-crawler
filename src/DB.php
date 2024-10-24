@@ -12,12 +12,8 @@ class DB
     {
     }
 
-    public static function getPDO(): PDO
+    public static function createPDO(): void
     {
-        if (self::$pdo) {
-            return self::$pdo;
-        }
-
         self::$pdo = new PDO(
             "{$_ENV['DB_DRIVER']}:host={$_ENV['DB_HOST']};dbname={$_ENV['DB_DATABASE']}",
             $_ENV['DB_USERNAME'],
@@ -28,7 +24,13 @@ class DB
                 PDO::ATTR_EMULATE_PREPARES   => false
             ]
         );
+    }
 
+    public static function getPDO(): PDO
+    {
+        if (is_null(self::$pdo)) {
+            self::createPDO();
+        }
         return self::$pdo;
     }
 }
