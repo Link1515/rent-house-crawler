@@ -36,6 +36,6 @@ class StringUrils
 
     public static function clearAbnormalSpace(string $string): string
     {
-        return preg_replace('/\xA0/', '', $string);
+        return preg_replace('/\p{Zs}/u', '', $string);
     }
 }
