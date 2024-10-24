@@ -28,4 +28,14 @@ class StringUrils
     {
         return !self::stringContainAny($string, $needles);
     }
+
+    public static function brToLineBreak(string $string): string
+    {
+        return preg_replace('/<br>/', "\n", $string);
+    }
+
+    public static function clearAbnormalSpace(string $string): string
+    {
+        return preg_replace('/\xA0/', '', $string);
+    }
 }
