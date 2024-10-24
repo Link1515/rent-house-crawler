@@ -52,6 +52,10 @@ class CrawlHouseService
         }
 
         $newHouses = $this->getNewHouses($houses, $storedHouseIds);
+        if (count($newHouses) === 0) {
+            return;
+        }
+
         /** @var House $house */
         foreach ($newHouses as $house) {
             $this->setDetailCrawler($house->getLink());
