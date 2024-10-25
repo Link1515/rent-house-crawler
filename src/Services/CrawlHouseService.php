@@ -4,7 +4,7 @@ namespace Link1515\RentHouseCrawler\Services;
 
 use Link1515\RentHouseCrawler\Entities\House;
 use Link1515\RentHouseCrawler\Repositories\HouseRepository;
-use Link1515\RentHouseCrawler\Services\MessageService;
+use Link1515\RentHouseCrawler\Services\MessageServices\MessageServiceInterface;
 use Link1515\RentHouseCrawler\Utils\RegexUtils;
 use Link1515\RentHouseCrawler\Utils\StringUrils;
 use Symfony\Component\DomCrawler\Crawler;
@@ -24,16 +24,18 @@ class CrawlHouseService
     private Crawler $crawler;
     private Crawler $detailCrawler;
     private HouseRepository $houseRepository;
+    private MessageServiceInterface $messageService;
     private bool $excludeAgent            = true;
     private bool $excludeManOnly          = false;
     private bool $excludeWomanOnly        = false;
     private bool $excludeTopFloorAddition = true;
     private bool $excludeBasement         = true;
 
-    public function __construct(HouseRepository $houseRepository, string $url, array $options = [])
+    public function __construct(HouseRepository $houseRepository, MessageServiceInterface $messageService, string $url, array $options = [])
     {
         $this->crawler                 = $this->createCrawler($url);
         $this->houseRepository         = $houseRepository;
+        $this->messageService          = $messageService;
         $this->excludeAgent            = $options['excludeAgent'] ?? $this->excludeAgent;
         $this->excludeManOnly          = $options['excludeManOnly'] ?? $this->excludeManOnly;
         $this->excludeWomanOnly        = $options['excludeWomanOnly'] ?? $this->excludeWomanOnly;
@@ -61,7 +63,7 @@ class CrawlHouseService
             $this->setDetailCrawler($house->getLink());
             $description = $this->getDetailDescription();
             $images      = $this->getDetailImages();
-            MessageService::sendHouseMessage($house, $description, $images);
+            $this->messageService->sendHouseMessage($house, $description, $images);
         }
 
         $this->houseRepository->truncateHousesTable();
