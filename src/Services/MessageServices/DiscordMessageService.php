@@ -42,6 +42,7 @@ class DiscordMessageService implements MessageServiceInterface
                 'title'       => $house->title,
                 'description' => $message,
                 'url'         => $url,
+                'color'       => 16744448
             ],
             ...$imageEmbeds
         ]);
