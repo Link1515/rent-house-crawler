@@ -5,6 +5,7 @@ namespace Link1515\RentHouseCrawler\Services;
 use Link1515\RentHouseCrawler\Entities\House;
 use Link1515\RentHouseCrawler\Repositories\HouseRepository;
 use Link1515\RentHouseCrawler\Services\MessageServices\MessageServiceInterface;
+use Link1515\RentHouseCrawler\Utils\LogUtils;
 use Link1515\RentHouseCrawler\Utils\RegexUtils;
 use Link1515\RentHouseCrawler\Utils\StringUrils;
 use Symfony\Component\DomCrawler\Crawler;
@@ -45,29 +46,40 @@ class CrawlHouseService
 
     public function crawl(): void
     {
-        $houses = $this->crawlHouses();
+        try {
+            LogUtils::log('Crawling houses...');
+            $houses = $this->crawlHouses();
 
-        $storedHouseIds = $this->houseRepository->getAllHouseIds();
-        if (empty($storedHouseIds)) {
+            $storedHouseIds = $this->houseRepository->getAllHouseIds();
+            if (empty($storedHouseIds)) {
+                $this->houseRepository->insertHouses($houses);
+                return;
+            }
+
+            $newHouses = $this->getNewHouses($houses, $storedHouseIds);
+            if (count($newHouses) === 0) {
+                LogUtils::log('No new houses found!');
+                return;
+            }
+
+            LogUtils::log('Found new houses: ' . count($newHouses) . ', and will be sent to Discord...');
+            /** @var House $house */
+            foreach ($newHouses as $house) {
+                $this->setDetailCrawler($house->getLink());
+                $description = $this->getDetailDescription();
+                $images      = $this->getDetailImages();
+                $this->messageService->sendHouseMessage($house, $description, $images);
+            }
+
+            $this->houseRepository->truncateHousesTable();
             $this->houseRepository->insertHouses($houses);
-            return;
-        }
 
-        $newHouses = $this->getNewHouses($houses, $storedHouseIds);
-        if (count($newHouses) === 0) {
-            return;
+            LogUtils::log('Done!');
+        } catch (\Throwable $e) {
+            LogUtils::log($e->getMessage());
+        } finally {
+            echo "\n";
         }
-
-        /** @var House $house */
-        foreach ($newHouses as $house) {
-            $this->setDetailCrawler($house->getLink());
-            $description = $this->getDetailDescription();
-            $images      = $this->getDetailImages();
-            $this->messageService->sendHouseMessage($house, $description, $images);
-        }
-
-        $this->houseRepository->truncateHousesTable();
-        $this->houseRepository->insertHouses($houses);
     }
 
     private function createCrawler($url): Crawler
