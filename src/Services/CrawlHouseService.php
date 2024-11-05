@@ -186,7 +186,7 @@ class CrawlHouseService
 
     private function excludeWomanOnlyFromHouses(array &$houses)
     {
-        $needles = ['限女', '女性', '女生', '租女'];
+        $needles = ['限女', '女性', '女生', '租女', '女學'];
         $houses  = array_filter(
             $houses,
             function (House $house) use ($needles) {
@@ -197,7 +197,7 @@ class CrawlHouseService
 
     private function excludeManOnlyFromHouses(array &$houses)
     {
-        $needles = ['限男', '男性', '男生', '租男'];
+        $needles = ['限男', '男性', '男生', '租男', '男學'];
         $houses  = array_filter(
             $houses,
             function (House $house) use ($needles) {
