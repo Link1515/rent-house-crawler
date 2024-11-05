@@ -50,13 +50,12 @@ class CrawlHouseService
             LogUtils::log('Crawling houses...');
             $houses = $this->crawlHouses();
 
-            $storedHouseIds = $this->houseRepository->getAllHouseIds();
-            if (empty($storedHouseIds)) {
+            if ($this->houseRepository->count() === 0) {
                 $this->houseRepository->insertHouses($houses);
                 return;
             }
 
-            $newHouses = $this->getNewHouses($houses, $storedHouseIds);
+            $newHouses = $this->houseRepository->findNewHouses($houses);
             if (count($newHouses) === 0) {
                 LogUtils::log('No new houses found!');
                 return;
@@ -84,17 +83,6 @@ class CrawlHouseService
     {
         $html = file_get_contents($url);
         return new Crawler($html);
-    }
-
-    private function getNewHouses($houses, $storedHouseIds): array
-    {
-        $currentHouseIds = array_column($houses, 'id');
-        $newHouseIds     = array_diff($currentHouseIds, $storedHouseIds);
-        $newHouses       = array_filter($houses, function (House $house) use ($newHouseIds) {
-            return in_array($house->id, $newHouseIds);
-        });
-
-        return $newHouses;
     }
 
     private function crawlHouses(): array

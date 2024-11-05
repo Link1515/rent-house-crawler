@@ -32,11 +32,7 @@ class HouseRepository
         $sql = <<<SQL
             CREATE TABLE IF NOT EXISTS `{$this->tableName}` (
                 id int NOT NULL,
-                title varchar(255) NOT NULL,
-                price varchar(255) NOT NULL,
-                address varchar(255) NOT NULL,
-                floor varchar(255) NOT NULL,
-                poster varchar(255) NOT NULL,
+                created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 CONSTRAINT houses_pk PRIMARY KEY (id)
             ) ENGINE=InnoDB
             DEFAULT CHARSET=utf8mb4
@@ -51,40 +47,32 @@ class HouseRepository
         $this->pdo->exec("TRUNCATE TABLE `{$this->tableName}`");
     }
 
-    public function getAllHouseIds(): array
+    public function count(): int
     {
-        $result = [];
-        $rows   = $this->pdo->query("SELECT id FROM `{$this->tableName}`");
-        foreach ($rows as $row) {
-            $result[] = $row['id'];
-        }
-        return $result;
+        $sql    = "SELECT COUNT(*) FROM `{$this->tableName}`";
+        $result = $this->pdo->query($sql);
+        return $result->fetchColumn();
     }
 
-    public function insertHouse(House $house): bool
+    public function findNewHouses(array $houses): array
     {
-        $result = $this->pdo->prepare(
-            "INSERT INTO 
-                        `{$this->tableName}` (id, title, price, address, floor, poster) 
-                    VALUES 
-                        (:id, :title, :price, :address, :floor, :poster)"
-        )->execute([
-            'id'      => $house->id,
-            'title'   => $house->title,
-            'price'   => $house->price,
-            'address' => $house->address,
-            'floor'   => $house->floor,
-            'poster'  => $house->poster,
-        ]);
+        $ids        = array_column($houses, 'id');
+        $sql        = "SELECT id FROM `{$this->tableName}` WHERE id IN (" . implode(',', $ids) . ')';
+        $result     = $this->pdo->query($sql);
+        $existedIds = $result->fetchAll(PDO::FETCH_COLUMN);
 
-        return $result;
+        $newHouses = array_filter($houses, function (House $house) use ($existedIds) {
+            return !in_array($house->id, $existedIds);
+        });
+
+        return $newHouses;
     }
 
     public function insertHouses(array $houses)
     {
-        $sql = "INSERT INTO `{$this->tableName}` (id, title, price, address, floor, poster) VALUES ";
+        $sql = "INSERT INTO `{$this->tableName}` (id) VALUES ";
         foreach ($houses as $house) {
-            $sql .= "({$house->id}, '{$house->title}', {$house->price}, '{$house->address}', '{$house->floor}', '{$house->poster}'), ";
+            $sql .= "({$house->id}), ";
         }
         $sql = substr($sql, 0, -2);
 
