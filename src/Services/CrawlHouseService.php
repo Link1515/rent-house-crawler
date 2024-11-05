@@ -7,7 +7,6 @@ use Link1515\RentHouseCrawler\Repositories\HouseRepository;
 use Link1515\RentHouseCrawler\Services\MessageServices\MessageServiceInterface;
 use Link1515\RentHouseCrawler\Utils\CryptoUtils;
 use Link1515\RentHouseCrawler\Utils\LogUtils;
-use Link1515\RentHouseCrawler\Utils\RegexUtils;
 use Link1515\RentHouseCrawler\Utils\StringUrils;
 use Symfony\Component\DomCrawler\Crawler;
 
@@ -106,12 +105,19 @@ class CrawlHouseService
         foreach ($houseList as $houseItem) {
             $id      = $houseItem['id'];
             $title   = $houseItem['title'];
-            $price   = $houseItem['price'] . ' ' . $houseItem['price_unit'];
+            $type    = $houseItem['kind_name'];
+            $area    = $houseItem['area_name'];
+            $price   = $houseItem['price'] . $houseItem['price_unit'];
             $address = $houseItem['address'];
             $floor   = $houseItem['floor_name'];
             $poster  = $houseItem['role_name'];
 
-            $house = new House($id, $title, $price, $address, $floor, $poster);
+            $surrounding = '';
+            if ($houseItem['surrounding']) {
+                $surrounding = $houseItem['surrounding']['desc'] . $houseItem['surrounding']['distance'];
+            }
+
+            $house = new House($id, $title, $type, $area, $price, $address, $surrounding, $floor, $poster);
             array_push($houses, $house);
         }
 

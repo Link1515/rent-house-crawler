@@ -7,8 +7,11 @@ class House
     public function __construct(
         public int $id,
         public string $title,
+        public string $type,
+        public string $area,
         public string $price,
         public string $address,
+        public string $surrounding,
         public string $floor,
         public string $poster
     ) {
@@ -23,12 +26,15 @@ class House
     {
         return
             <<<String
-            id:      {$this->id}
-            title:   {$this->title}
-            price:   {$this->price}
-            address: {$this->address}
-            floor:   {$this->floor}
-            poster:  {$this->poster}
+            id:          {$this->id}
+            title:       {$this->title}
+            type:        {$this->type}
+            area:        {$this->area}
+            price:       {$this->price}
+            address:     {$this->address}
+            surrounding: {$this->surrounding}
+            floor:       {$this->floor}
+            poster:      {$this->poster}
             \n
             String;
     }
