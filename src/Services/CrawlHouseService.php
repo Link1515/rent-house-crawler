@@ -12,12 +12,6 @@ use Symfony\Component\DomCrawler\Crawler;
 
 class CrawlHouseService
 {
-    private const ITEM_SELECTOR               = '.item';
-    private const PRICE_DIGIAL_SELECTOR       = '.item-info-price i';
-    private const TITLE_SELECTOR              = '.item-info-title a';
-    private const ADDRESS_CHAR_SELECTOR       = '.item-info-txt:nth-child(3) > span > span > i';
-    private const FLOOR_CHAR_SELECTOR         = '.item-info-txt:nth-child(2) > span > span > i';
-    private const POSTER_SELECTOR             = '.role-name > span:nth-child(1)';
     private const DETAIL_DESCRIPTION_SELECTOR = '.house-condition-content .article';
     private const DETAIL_IMAGES_SELECTOR      = '.common-img';
     private const DETAIL_IMAGES_PLACEHOLDER   = 'no-photo-new.png';
