@@ -5,6 +5,7 @@ namespace Link1515\RentHouseCrawler\Services;
 use Link1515\RentHouseCrawler\Entities\House;
 use Link1515\RentHouseCrawler\Repositories\HouseRepository;
 use Link1515\RentHouseCrawler\Services\MessageServices\MessageServiceInterface;
+use Link1515\RentHouseCrawler\Utils\CryptoUtils;
 use Link1515\RentHouseCrawler\Utils\LogUtils;
 use Link1515\RentHouseCrawler\Utils\RegexUtils;
 use Link1515\RentHouseCrawler\Utils\StringUrils;
@@ -77,8 +78,6 @@ class CrawlHouseService
             LogUtils::log('Done!');
         } catch (\Throwable $e) {
             LogUtils::log($e->getMessage());
-        } finally {
-            echo "\n";
         }
     }
 
@@ -101,79 +100,58 @@ class CrawlHouseService
 
     private function crawlHouses(): array
     {
-        $houses = [];
+        $houses    = [];
+        $houseList = $this->getHouseList();
 
-        $this->crawler
-            ->filter(self::ITEM_SELECTOR)
-            ->each(function ($node) use (&$houses) {
-                $id      = $this->getId($node);
-                $title   = $this->getTitle($node);
-                $price   = $this->getPrice($node);
-                $address = $this->getAddress($node);
-                $floor   = $this->getFloor($node);
-                $poster  = $this->getPoster($node);
+        foreach ($houseList as $houseItem) {
+            $id      = $houseItem['id'];
+            $title   = $houseItem['title'];
+            $price   = $houseItem['price'] . ' ' . $houseItem['price_unit'];
+            $address = $houseItem['address'];
+            $floor   = $houseItem['floor_name'];
+            $poster  = $houseItem['role_name'];
 
-                $house = new House($id, $title, $price, $address, $floor, $poster);
-                array_push($houses, $house);
-            });
+            $house = new House($id, $title, $price, $address, $floor, $poster);
+            array_push($houses, $house);
+        }
 
         $this->excludeHousesByOptions($houses);
 
         return $houses;
     }
 
-    private function getTitle(Crawler $node): string
+    private function getHouseList(): array
     {
-        return $node->filter(self::TITLE_SELECTOR)->first()->text();
+        $html      = $this->crawler->html();
+        $paramsMap = $this->extractNuxtParams($html);
+        if (!array_key_exists('d', $paramsMap)) {
+            throw new \Exception('Failed to get house raw data');
+        }
+        $rawData  = $paramsMap['d'];
+        $jsonData = CryptoUtils::Decrypt($rawData);
+        $data     = json_decode($jsonData, true);
+        return $data['items'];
     }
 
-    private function getId(Crawler $node): int
+    private function extractNuxtParams(string $html): array
     {
-        $url        = $node->filter(self::TITLE_SELECTOR)->link()->getUri();
-        $urlPartial = explode('/', $url);
-        return (int) end($urlPartial);
-    }
+        preg_match('/window\.__NUXT__=\(function\((.*)\){/', $html, $matches);
+        $varNames = explode(',', $matches[1]);
 
-    private function getPrice(Crawler $node): int
-    {
-        $price = $this->restoreTextOrder($node, self::PRICE_DIGIAL_SELECTOR);
-        $price = str_replace(',', '', $price);
-        return (int) $price;
-    }
+        preg_match('/}\((.*)\)\)/', $html, $matches);
+        $varValues = preg_split('/,(?=(?:(?:[^"]*"){2})*[^"]*$)/', $matches[1]);
+        $varValues = array_map(function ($item) {
+            $item = trim($item, '"');
+            $item = json_decode('"' . $item . '"');
+            return $item;
+        }, $varValues);
 
-    private function getAddress(Crawler $node): string
-    {
-        return $this->restoreTextOrder($node, self::ADDRESS_CHAR_SELECTOR);
-    }
+        $paramsMap = [];
+        for ($i = 0; $i < count($varNames); $i++) {
+            $paramsMap[$varNames[$i]] = $varValues[$i];
+        }
 
-    private function getFloor(Crawler $node): string
-    {
-        return $this->restoreTextOrder($node, self::FLOOR_CHAR_SELECTOR);
-    }
-
-    private function restoreTextOrder(Crawler $node, string $selector): string
-    {
-        $orderRecorder = [];
-        $node
-            ->filter($selector)
-            ->each(function ($node) use (&$orderRecorder) {
-                $digial = $node->text();
-
-                $style = $node->attr('style');
-                $order = RegexUtils::findFirstGroup('/order:\s*?(\d+)/', $style);
-
-                $orderRecorder[$order] = $digial;
-            });
-
-        ksort($orderRecorder);
-        $text = implode('', $orderRecorder);
-
-        return $text;
-    }
-
-    private function getPoster(Crawler $node): string
-    {
-        return $node->filter(self::POSTER_SELECTOR)->first()->text();
+        return $paramsMap;
     }
 
     private function excludeHousesByOptions(array &$houses)
