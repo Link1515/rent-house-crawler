@@ -33,7 +33,7 @@ class HouseRepository
             CREATE TABLE IF NOT EXISTS `{$this->tableName}` (
                 id int NOT NULL,
                 title varchar(255) NOT NULL,
-                price int NOT NULL,
+                price varchar(255) NOT NULL,
                 address varchar(255) NOT NULL,
                 floor varchar(255) NOT NULL,
                 poster varchar(255) NOT NULL,

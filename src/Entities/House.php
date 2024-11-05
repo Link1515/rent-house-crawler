@@ -7,7 +7,7 @@ class House
     public function __construct(
         public int $id,
         public string $title,
-        public int $price,
+        public string $price,
         public string $address,
         public string $floor,
         public string $poster
@@ -28,7 +28,8 @@ class House
             price:   {$this->price}
             address: {$this->address}
             floor:   {$this->floor}
-            poster:  {$this->poster}\n
+            poster:  {$this->poster}
+            \n
             String;
     }
 }
