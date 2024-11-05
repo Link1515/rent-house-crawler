@@ -16,7 +16,10 @@ class ConsoleMessageService implements MessageServiceInterface
         {$house->title}
 
         房租: {$house->price}
+        類型: {$house->type}
+        坪數: {$house->area}
         位置: {$house->address}
+        周邊: {$house->surrounding}
         樓層: {$house->floor}
         發布者: {$house->poster}
 

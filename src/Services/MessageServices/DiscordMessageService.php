@@ -29,9 +29,14 @@ class DiscordMessageService implements MessageServiceInterface
 
         $message = <<<Message
         房租: {$house->price}
-        位置: {$house->address}
+        類型: {$house->type}
+        坪數: {$house->area}
+        位置: [{$house->address}](https://www.google.com/maps/search/{$house->address})
+        周邊: {$house->surrounding}
         樓層: {$house->floor}
         發布者: {$house->poster}
+
+        ### 房屋描述
 
         {$description}
         \n
