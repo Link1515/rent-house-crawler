@@ -26,8 +26,12 @@ class CrawlHouseService
     private bool $excludeTopFloorAddition = true;
     private bool $excludeBasement         = true;
 
-    public function __construct(HouseRepository $houseRepository, MessageServiceInterface $messageService, string $url, array $options = [])
-    {
+    public function __construct(
+        HouseRepository $houseRepository,
+        MessageServiceInterface $messageService,
+        string $url,
+        array $options = []
+    ) {
         $this->crawler                 = $this->createCrawler($url);
         $this->houseRepository         = $houseRepository;
         $this->messageService          = $messageService;
@@ -112,10 +116,11 @@ class CrawlHouseService
     {
         $html      = $this->crawler->html();
         $paramsMap = $this->extractNuxtParams($html);
-        if (!array_key_exists('d', $paramsMap)) {
+        $dataKey   = 'e';
+        if (!array_key_exists($dataKey, $paramsMap)) {
             throw new \Exception('Failed to get house raw data');
         }
-        $rawData  = $paramsMap['d'];
+        $rawData  = $paramsMap[$dataKey];
         $jsonData = CryptoUtils::Decrypt($rawData);
         $data     = json_decode($jsonData, true);
         return $data['items'];
