@@ -3,22 +3,17 @@
 namespace Link1515\RentHouseCrawler\Services;
 
 use Link1515\RentHouseCrawler\Entities\House;
+use Link1515\RentHouseCrawler\Entities\HouseDetails;
 use Link1515\RentHouseCrawler\Repositories\HouseRepository;
 use Link1515\RentHouseCrawler\Services\MessageServices\MessageServiceInterface;
 use Link1515\RentHouseCrawler\Utils\CryptoUtils;
 use Link1515\RentHouseCrawler\Utils\LogUtils;
 use Link1515\RentHouseCrawler\Utils\StringUrils;
-use Symfony\Component\DomCrawler\Crawler;
 
 class CrawlHouseService
 {
-    private const DETAIL_DESCRIPTION_SELECTOR = '.house-condition-content .article';
-    private const DETAIL_IMAGES_SELECTOR      = '.common-img';
-    private const DETAIL_IMAGES_PLACEHOLDER   = 'no-photo-new.png';
-
     private HouseRepository $houseRepository;
     private MessageServiceInterface $messageService;
-    private Crawler $detailCrawler;
     private string $url;
     private array $houses = [];
     private bool $excludeAgent            = true;
@@ -133,10 +128,8 @@ class CrawlHouseService
         LogUtils::log('Found new houses: ' . count($newHouses) . ', and will be sent to Discord...');
         /** @var House $house */
         foreach ($newHouses as $house) {
-            $this->setDetailCrawler($house->getLink());
-            $description = $this->getDetailDescription();
-            $images      = $this->getDetailImages();
-            $this->messageService->sendHouseMessage($house, $description, $images);
+            $houseDetails = new HouseDetails($house->id);
+            $this->messageService->sendHouseMessage($house, $houseDetails->description, $houseDetails->images);
         }
 
         $this->houses = $newHouses;
@@ -221,36 +214,5 @@ class CrawlHouseService
             return;
         }
         $this->houseRepository->insertHouses($this->houses);
-    }
-
-    private function setDetailCrawler(string $url)
-    {
-        $html = file_get_contents($url);
-        $this->detailCrawler = new Crawler($html);
-    }
-
-    private function getDetailDescription(): string
-    {
-        $description = $this->detailCrawler
-            ->filter(self::DETAIL_DESCRIPTION_SELECTOR)
-            ->html();
-        $description = StringUrils::brToLineBreak($description);
-        $description = strip_tags($description);
-        $description = StringUrils::clearAbnormalSpace($description);
-
-        return $description;
-    }
-
-    private function getDetailImages(): array
-    {
-        $images = [];
-        $this->detailCrawler->filter(self::DETAIL_IMAGES_SELECTOR)->each(function ($node) use (&$images) {
-            $src = $node->attr('data-src');
-            if (str_contains($src, self::DETAIL_IMAGES_PLACEHOLDER)) {
-                return;
-            }
-            array_push($images, $src);
-        });
-        return $images;
     }
 }
