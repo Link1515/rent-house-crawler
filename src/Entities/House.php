@@ -5,15 +5,15 @@ namespace Link1515\RentHouseCrawler\Entities;
 class House
 {
     public function __construct(
-        public int $id,
-        public string $title,
-        public string $type,
-        public string $area,
-        public string $price,
-        public string $address,
-        public string $surrounding,
-        public string $floor,
-        public string $poster
+        public readonly int $id,
+        public readonly string $title,
+        public readonly string $type,
+        public readonly string $area,
+        public readonly string $price,
+        public readonly string $address,
+        public readonly string $surrounding,
+        public readonly string $floor,
+        public readonly string $poster
     ) {
     }
 
