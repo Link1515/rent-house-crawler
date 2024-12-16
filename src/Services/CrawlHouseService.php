@@ -7,6 +7,7 @@ use Link1515\RentHouseCrawler\Entities\HouseDetails;
 use Link1515\RentHouseCrawler\Repositories\HouseRepository;
 use Link1515\RentHouseCrawler\Services\MessageServices\MessageServiceInterface;
 use Link1515\RentHouseCrawler\Utils\CryptoUtils;
+use Link1515\RentHouseCrawler\Utils\ExtractNuxtParamsUtils;
 use Link1515\RentHouseCrawler\Utils\LogUtils;
 use Link1515\RentHouseCrawler\Utils\StringUrils;
 
@@ -15,7 +16,7 @@ class CrawlHouseService
     private HouseRepository $houseRepository;
     private MessageServiceInterface $messageService;
     private string $url;
-    private array $houses = [];
+    private array $houses                 = [];
     private bool $excludeAgent            = true;
     private bool $excludeManOnly          = false;
     private bool $excludeWomanOnly        = false;
@@ -55,7 +56,7 @@ class CrawlHouseService
     private function crawlHouses(): void
     {
         LogUtils::log('Crawling houses...');
-        $html = file_get_contents($this->url);
+        $html      = file_get_contents($this->url);
         $houseList = $this->parseHouseList($html);
 
         foreach ($houseList as $houseItem) {
@@ -80,7 +81,7 @@ class CrawlHouseService
 
     private function parseHouseList(string $html): array
     {
-        $paramsMap = $this->extractNuxtParams($html);
+        $paramsMap = ExtractNuxtParamsUtils::extract($html);
         $dataKey   = 'e';
         if (!array_key_exists($dataKey, $paramsMap)) {
             throw new \Exception('Failed to get house raw data');
@@ -89,27 +90,6 @@ class CrawlHouseService
         $jsonData = CryptoUtils::Decrypt($rawData);
         $data     = json_decode($jsonData, true);
         return $data['items'];
-    }
-
-    private function extractNuxtParams(string $html): array
-    {
-        preg_match('/window\.__NUXT__=\(function\((.*)\){/', $html, $matches);
-        $varNames = explode(',', $matches[1]);
-
-        preg_match('/}\((.*)\)\)/', $html, $matches);
-        $varValues = preg_split('/,(?=(?:(?:[^"]*"){2})*[^"]*$)/', $matches[1]);
-        $varValues = array_map(function ($item) {
-            $item = trim($item, '"');
-            $item = json_decode('"' . $item . '"');
-            return $item;
-        }, $varValues);
-
-        $paramsMap = [];
-        for ($i = 0; $i < count($varNames); $i++) {
-            $paramsMap[$varNames[$i]] = $varValues[$i];
-        }
-
-        return $paramsMap;
     }
 
     private function filterNewHouses()
@@ -209,7 +189,8 @@ class CrawlHouseService
         );
     }
 
-    private function saveHouses() {
+    private function saveHouses()
+    {
         if (count($this->houses) === 0) {
             return;
         }
