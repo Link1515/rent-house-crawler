@@ -16,10 +16,11 @@ class CrawlHouseService
     private const DETAIL_IMAGES_SELECTOR      = '.common-img';
     private const DETAIL_IMAGES_PLACEHOLDER   = 'no-photo-new.png';
 
-    private Crawler $crawler;
-    private Crawler $detailCrawler;
     private HouseRepository $houseRepository;
     private MessageServiceInterface $messageService;
+    private Crawler $crawler;
+    private Crawler $detailCrawler;
+    private array $houses = [];
     private bool $excludeAgent            = true;
     private bool $excludeManOnly          = false;
     private bool $excludeWomanOnly        = false;
@@ -42,34 +43,19 @@ class CrawlHouseService
         $this->excludeBasement         = $options['excludeBasement'] ?? $this->excludeBasement;
     }
 
+    private function createCrawler($url): Crawler
+    {
+        $html = file_get_contents($url);
+        return new Crawler($html);
+    }
+
     public function crawl(): void
     {
         try {
-            LogUtils::log('Crawling houses...');
-            $houses = $this->crawlHouses();
-
-            if ($this->houseRepository->count() === 0) {
-                $this->houseRepository->insertHouses($houses);
-                return;
-            }
-
-            $newHouses = $this->houseRepository->findNewHouses($houses);
-            if (count($newHouses) === 0) {
-                LogUtils::log('No new houses found!');
-                return;
-            }
-
-            LogUtils::log('Found new houses: ' . count($newHouses) . ', and will be sent to Discord...');
-            /** @var House $house */
-            foreach ($newHouses as $house) {
-                $this->setDetailCrawler($house->getLink());
-                $description = $this->getDetailDescription();
-                $images      = $this->getDetailImages();
-                $this->messageService->sendHouseMessage($house, $description, $images);
-            }
-
-            $this->houseRepository->truncateHousesTable();
-            $this->houseRepository->insertHouses($houses);
+            $this->crawlHouses();
+            $this->excludeHousesByOptions();
+            $this->filterNewHouses();
+            $this->saveHouses();
 
             LogUtils::log('Done!');
         } catch (\Throwable $e) {
@@ -77,16 +63,10 @@ class CrawlHouseService
         }
     }
 
-    private function createCrawler($url): Crawler
+    private function crawlHouses(): void
     {
-        $html = file_get_contents($url);
-        return new Crawler($html);
-    }
-
-    private function crawlHouses(): array
-    {
-        $houses    = [];
-        $houseList = $this->getHouseList();
+        LogUtils::log('Crawling houses...');
+        $houseList = $this->parseHouseList();
 
         foreach ($houseList as $houseItem) {
             $id      = $houseItem['id'];
@@ -104,15 +84,11 @@ class CrawlHouseService
             }
 
             $house = new House($id, $title, $type, $area, $price, $address, $surrounding, $floor, $poster);
-            array_push($houses, $house);
+            array_push($this->houses, $house);
         }
-
-        $this->excludeHousesByOptions($houses);
-
-        return $houses;
     }
 
-    private function getHouseList(): array
+    private function parseHouseList(): array
     {
         $html      = $this->crawler->html();
         $paramsMap = $this->extractNuxtParams($html);
@@ -147,22 +123,47 @@ class CrawlHouseService
         return $paramsMap;
     }
 
-    private function excludeHousesByOptions(array &$houses)
+    private function filterNewHouses()
+    {
+        if ($this->houseRepository->count() === 0) {
+            return;
+        }
+
+        $newHouses = $this->houseRepository->findNewHouses($this->houses);
+        if (count($newHouses) === 0) {
+            $this->houses = [];
+            LogUtils::log('No new houses found!');
+            return;
+        }
+
+        LogUtils::log('Found new houses: ' . count($newHouses) . ', and will be sent to Discord...');
+        /** @var House $house */
+        foreach ($newHouses as $house) {
+            $this->setDetailCrawler($house->getLink());
+            $description = $this->getDetailDescription();
+            $images      = $this->getDetailImages();
+            $this->messageService->sendHouseMessage($house, $description, $images);
+        }
+
+        $this->houses = $newHouses;
+    }
+
+    private function excludeHousesByOptions()
     {
         if ($this->excludeAgent) {
-            $this->excludeAgentFromHouses($houses);
+            $this->excludeAgentFromHouses($this->houses);
         }
         if ($this->excludeManOnly) {
-            $this->excludeManOnlyFromHouses($houses);
+            $this->excludeManOnlyFromHouses($this->houses);
         }
         if ($this->excludeWomanOnly) {
-            $this->excludeWomanOnlyFromHouses($houses);
+            $this->excludeWomanOnlyFromHouses($this->houses);
         }
         if ($this->excludeTopFloorAddition) {
-            $this->excludeTopFloorAdditionFromHouse($houses);
+            $this->excludeTopFloorAdditionFromHouse($this->houses);
         }
         if ($this->excludeBasement) {
-            $this->excludeBasementFromHouse($houses);
+            $this->excludeBasementFromHouse($this->houses);
         }
     }
 
@@ -219,6 +220,13 @@ class CrawlHouseService
                 return StringUrils::stringNotContain($house->floor, $needle);
             }
         );
+    }
+
+    private function saveHouses() {
+        if (count($this->houses) === 0) {
+            return;
+        }
+        $this->houseRepository->insertHouses($this->houses);
     }
 
     private function setDetailCrawler(string $url)
