@@ -6,22 +6,28 @@ use Link1515\RentHouseCrawler\Entities\House;
 use Link1515\RentHouseCrawler\Entities\HouseDetails;
 use Link1515\RentHouseCrawler\Repositories\HouseRepository;
 use Link1515\RentHouseCrawler\Services\MessageServices\MessageServiceInterface;
+use Link1515\RentHouseCrawler\Strategy\ExcludeAgentFilter;
+use Link1515\RentHouseCrawler\Strategy\ExcludeBasementFilter;
+use Link1515\RentHouseCrawler\Strategy\ExcludeManOnlyFilter;
+use Link1515\RentHouseCrawler\Strategy\ExcludeTopFloorAdditionFilter;
+use Link1515\RentHouseCrawler\Strategy\ExcludeWomanOnlyFilter;
+use Link1515\RentHouseCrawler\Strategy\HouseFilter;
 use Link1515\RentHouseCrawler\Utils\CryptoUtils;
 use Link1515\RentHouseCrawler\Utils\ExtractNuxtParamsUtils;
 use Link1515\RentHouseCrawler\Utils\LogUtils;
-use Link1515\RentHouseCrawler\Utils\StringUrils;
 
 class CrawlHouseService
 {
     private HouseRepository $houseRepository;
     private MessageServiceInterface $messageService;
     private string $url;
-    private array $houses                 = [];
+    private HouseFilter $houseFilters;
     private bool $excludeAgent            = true;
     private bool $excludeManOnly          = false;
     private bool $excludeWomanOnly        = false;
     private bool $excludeTopFloorAddition = true;
     private bool $excludeBasement         = true;
+    private array $houses                 = [];
 
     public function __construct(
         HouseRepository $houseRepository,
@@ -30,6 +36,7 @@ class CrawlHouseService
         array $options = []
     ) {
         $this->url                     = $url;
+        $this->houseFilters            = new HouseFilter();
         $this->houseRepository         = $houseRepository;
         $this->messageService          = $messageService;
         $this->excludeAgent            = $options['excludeAgent'] ?? $this->excludeAgent;
@@ -37,13 +44,34 @@ class CrawlHouseService
         $this->excludeWomanOnly        = $options['excludeWomanOnly'] ?? $this->excludeWomanOnly;
         $this->excludeTopFloorAddition = $options['excludeTopFloorAddition'] ?? $this->excludeTopFloorAddition;
         $this->excludeBasement         = $options['excludeBasement'] ?? $this->excludeBasement;
+
+        $this->initFilters();
+    }
+
+    private function initFilters(): void
+    {
+        if ($this->excludeAgent) {
+            $this->houseFilters->addFilter(new ExcludeAgentFilter());
+        }
+        if ($this->excludeManOnly) {
+            $this->houseFilters->addFilter(new ExcludeManOnlyFilter());
+        }
+        if ($this->excludeWomanOnly) {
+            $this->houseFilters->addFilter(new ExcludeWomanOnlyFilter());
+        }
+        if ($this->excludeTopFloorAddition) {
+            $this->houseFilters->addFilter(new ExcludeTopFloorAdditionFilter());
+        }
+        if ($this->excludeBasement) {
+            $this->houseFilters->addFilter(new ExcludeBasementFilter());
+        }
     }
 
     public function crawl(): void
     {
         try {
             $this->crawlHouses();
-            $this->excludeHousesByOptions();
+            $this->applyHouseFilters();
             $this->filterNewHouses();
             $this->saveHouses();
 
@@ -115,78 +143,9 @@ class CrawlHouseService
         $this->houses = $newHouses;
     }
 
-    private function excludeHousesByOptions()
+    private function applyHouseFilters()
     {
-        if ($this->excludeAgent) {
-            $this->excludeAgentFromHouses($this->houses);
-        }
-        if ($this->excludeManOnly) {
-            $this->excludeManOnlyFromHouses($this->houses);
-        }
-        if ($this->excludeWomanOnly) {
-            $this->excludeWomanOnlyFromHouses($this->houses);
-        }
-        if ($this->excludeTopFloorAddition) {
-            $this->excludeTopFloorAdditionFromHouse($this->houses);
-        }
-        if ($this->excludeBasement) {
-            $this->excludeBasementFromHouse($this->houses);
-        }
-    }
-
-    private function excludeAgentFromHouses(array &$houses)
-    {
-        $needle = '仲介';
-        $houses = array_filter(
-            $houses,
-            function (House $house) use ($needle) {
-                return StringUrils::stringNotContain($house->poster, $needle);
-            }
-        );
-    }
-
-    private function excludeWomanOnlyFromHouses(array &$houses)
-    {
-        $needles = ['限女', '女性', '女生', '租女', '女學'];
-        $houses  = array_filter(
-            $houses,
-            function (House $house) use ($needles) {
-                return StringUrils::stringContainNone($house->title, $needles);
-            }
-        );
-    }
-
-    private function excludeManOnlyFromHouses(array &$houses)
-    {
-        $needles = ['限男', '男性', '男生', '租男', '男學'];
-        $houses  = array_filter(
-            $houses,
-            function (House $house) use ($needles) {
-                return StringUrils::stringContainNone($house->title, $needles);
-            }
-        );
-    }
-
-    private function excludeTopFloorAdditionFromHouse(array &$houses)
-    {
-        $needle = '頂樓加蓋';
-        $houses = array_filter(
-            $houses,
-            function (House $house) use ($needle) {
-                return StringUrils::stringNotContain($house->floor, $needle);
-            }
-        );
-    }
-
-    private function excludeBasementFromHouse(array &$houses)
-    {
-        $needle = 'B';
-        $houses = array_filter(
-            $houses,
-            function (House $house) use ($needle) {
-                return StringUrils::stringNotContain($house->floor, $needle);
-            }
-        );
+        $this->houses = $this->houseFilters->filterHouses($this->houses);
     }
 
     private function saveHouses()
