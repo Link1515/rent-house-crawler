@@ -18,8 +18,8 @@ class CrawlHouseService
 
     private HouseRepository $houseRepository;
     private MessageServiceInterface $messageService;
-    private Crawler $crawler;
     private Crawler $detailCrawler;
+    private string $url;
     private array $houses = [];
     private bool $excludeAgent            = true;
     private bool $excludeManOnly          = false;
@@ -33,7 +33,7 @@ class CrawlHouseService
         string $url,
         array $options = []
     ) {
-        $this->crawler                 = $this->createCrawler($url);
+        $this->url                     = $url;
         $this->houseRepository         = $houseRepository;
         $this->messageService          = $messageService;
         $this->excludeAgent            = $options['excludeAgent'] ?? $this->excludeAgent;
@@ -41,12 +41,6 @@ class CrawlHouseService
         $this->excludeWomanOnly        = $options['excludeWomanOnly'] ?? $this->excludeWomanOnly;
         $this->excludeTopFloorAddition = $options['excludeTopFloorAddition'] ?? $this->excludeTopFloorAddition;
         $this->excludeBasement         = $options['excludeBasement'] ?? $this->excludeBasement;
-    }
-
-    private function createCrawler($url): Crawler
-    {
-        $html = file_get_contents($url);
-        return new Crawler($html);
     }
 
     public function crawl(): void
@@ -58,7 +52,7 @@ class CrawlHouseService
             $this->saveHouses();
 
             LogUtils::log('Done!');
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             LogUtils::log($e->getMessage());
         }
     }
@@ -66,7 +60,8 @@ class CrawlHouseService
     private function crawlHouses(): void
     {
         LogUtils::log('Crawling houses...');
-        $houseList = $this->parseHouseList();
+        $html = file_get_contents($this->url);
+        $houseList = $this->parseHouseList($html);
 
         foreach ($houseList as $houseItem) {
             $id      = $houseItem['id'];
@@ -88,9 +83,8 @@ class CrawlHouseService
         }
     }
 
-    private function parseHouseList(): array
+    private function parseHouseList(string $html): array
     {
-        $html      = $this->crawler->html();
         $paramsMap = $this->extractNuxtParams($html);
         $dataKey   = 'e';
         if (!array_key_exists($dataKey, $paramsMap)) {
@@ -231,7 +225,8 @@ class CrawlHouseService
 
     private function setDetailCrawler(string $url)
     {
-        $this->detailCrawler = $this->createCrawler($url);
+        $html = file_get_contents($url);
+        $this->detailCrawler = new Crawler($html);
     }
 
     private function getDetailDescription(): string
