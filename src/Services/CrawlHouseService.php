@@ -22,12 +22,14 @@ class CrawlHouseService
     private MessageServiceInterface $messageService;
     private string $url;
     private HouseFilter $houseFilters;
-    private bool $excludeAgent            = true;
-    private bool $excludeManOnly          = false;
-    private bool $excludeWomanOnly        = false;
-    private bool $excludeTopFloorAddition = true;
-    private bool $excludeBasement         = true;
     private array $houses                 = [];
+    private array $options         = [
+        'excludeAgent'            => true,
+        'excludeManOnly'          => false,
+        'excludeWomanOnly'        => false,
+        'excludeTopFloorAddition' => true,
+        'excludeBasement'         => true
+    ];
 
     public function __construct(
         HouseRepository $houseRepository,
@@ -39,30 +41,26 @@ class CrawlHouseService
         $this->houseFilters            = new HouseFilter();
         $this->houseRepository         = $houseRepository;
         $this->messageService          = $messageService;
-        $this->excludeAgent            = $options['excludeAgent'] ?? $this->excludeAgent;
-        $this->excludeManOnly          = $options['excludeManOnly'] ?? $this->excludeManOnly;
-        $this->excludeWomanOnly        = $options['excludeWomanOnly'] ?? $this->excludeWomanOnly;
-        $this->excludeTopFloorAddition = $options['excludeTopFloorAddition'] ?? $this->excludeTopFloorAddition;
-        $this->excludeBasement         = $options['excludeBasement'] ?? $this->excludeBasement;
+        $this->options                 = array_merge($this->options, $options);
 
         $this->initFilters();
     }
 
     private function initFilters(): void
     {
-        if ($this->excludeAgent) {
+        if ($this->options['excludeAgent']) {
             $this->houseFilters->addFilter(new ExcludeAgentFilter());
         }
-        if ($this->excludeManOnly) {
+        if ($this->options['excludeManOnly']) {
             $this->houseFilters->addFilter(new ExcludeManOnlyFilter());
         }
-        if ($this->excludeWomanOnly) {
+        if ($this->options['excludeWomanOnly']) {
             $this->houseFilters->addFilter(new ExcludeWomanOnlyFilter());
         }
-        if ($this->excludeTopFloorAddition) {
+        if ($this->options['excludeTopFloorAddition']) {
             $this->houseFilters->addFilter(new ExcludeTopFloorAdditionFilter());
         }
-        if ($this->excludeBasement) {
+        if ($this->options['excludeBasement']) {
             $this->houseFilters->addFilter(new ExcludeBasementFilter());
         }
     }
