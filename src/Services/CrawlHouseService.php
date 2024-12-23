@@ -12,7 +12,7 @@ use Link1515\RentHouseCrawler\Strategy\ExcludeManOnlyFilter;
 use Link1515\RentHouseCrawler\Strategy\ExcludeTopFloorAdditionFilter;
 use Link1515\RentHouseCrawler\Strategy\ExcludeWomanOnlyFilter;
 use Link1515\RentHouseCrawler\Strategy\HouseFilter;
-use Link1515\RentHouseCrawler\Utils\Decrypter\AesGcmDecrypter;
+use Link1515\RentHouseCrawler\Utils\Decrypter\AesCtrDecrypter;
 use Link1515\RentHouseCrawler\Utils\ExtractNuxtParamsUtils;
 use Link1515\RentHouseCrawler\Utils\LogUtils;
 
@@ -113,8 +113,9 @@ class CrawlHouseService
             throw new \Exception('Failed to get house raw data');
         }
         $rawData  = $paramsMap[$dataKey];
-        $jsonData = AesGcmDecrypter::Decrypt($rawData);
+        $jsonData = AesCtrDecrypter::Decrypt($rawData);
         $data     = json_decode($jsonData, true);
+
         return $data['items'];
     }
 
