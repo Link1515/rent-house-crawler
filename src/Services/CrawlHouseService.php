@@ -12,7 +12,7 @@ use Link1515\RentHouseCrawler\Strategy\ExcludeManOnlyFilter;
 use Link1515\RentHouseCrawler\Strategy\ExcludeTopFloorAdditionFilter;
 use Link1515\RentHouseCrawler\Strategy\ExcludeWomanOnlyFilter;
 use Link1515\RentHouseCrawler\Strategy\HouseFilter;
-use Link1515\RentHouseCrawler\Utils\CryptoUtils;
+use Link1515\RentHouseCrawler\Utils\Decrypter\AesGcmDecrypter;
 use Link1515\RentHouseCrawler\Utils\ExtractNuxtParamsUtils;
 use Link1515\RentHouseCrawler\Utils\LogUtils;
 
@@ -22,8 +22,8 @@ class CrawlHouseService
     private MessageServiceInterface $messageService;
     private string $url;
     private HouseFilter $houseFilters;
-    private array $houses                 = [];
-    private array $options         = [
+    private array $houses  = [];
+    private array $options = [
         'excludeAgent'            => true,
         'excludeManOnly'          => false,
         'excludeWomanOnly'        => false,
@@ -37,11 +37,11 @@ class CrawlHouseService
         string $url,
         array $options = []
     ) {
-        $this->url                     = $url;
-        $this->houseFilters            = new HouseFilter();
-        $this->houseRepository         = $houseRepository;
-        $this->messageService          = $messageService;
-        $this->options                 = array_merge($this->options, $options);
+        $this->url             = $url;
+        $this->houseFilters    = new HouseFilter();
+        $this->houseRepository = $houseRepository;
+        $this->messageService  = $messageService;
+        $this->options         = array_merge($this->options, $options);
 
         $this->initFilters();
     }
@@ -113,7 +113,7 @@ class CrawlHouseService
             throw new \Exception('Failed to get house raw data');
         }
         $rawData  = $paramsMap[$dataKey];
-        $jsonData = CryptoUtils::Decrypt($rawData);
+        $jsonData = AesGcmDecrypter::Decrypt($rawData);
         $data     = json_decode($jsonData, true);
         return $data['items'];
     }

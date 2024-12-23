@@ -1,8 +1,8 @@
 <?php
 
-namespace Link1515\RentHouseCrawler\Utils;
+namespace Link1515\RentHouseCrawler\Utils\Decrypter;
 
-class CryptoUtils
+class AesGcmDecrypter
 {
     public static function Decrypt(string $rawData): string
     {
