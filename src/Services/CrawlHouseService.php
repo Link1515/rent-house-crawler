@@ -14,11 +14,12 @@ use Link1515\RentHouseCrawler\Strategy\ExcludeWomanOnlyFilter;
 use Link1515\RentHouseCrawler\Strategy\HouseFilter;
 use Link1515\RentHouseCrawler\Utils\Decrypter\AesCtrDecrypter;
 use Link1515\RentHouseCrawler\Utils\ExtractNuxtParamsUtils;
+use Link1515\RentHouseCrawler\Utils\HttpUtils;
 use Link1515\RentHouseCrawler\Utils\LogUtils;
 
 class CrawlHouseService
 {
-    private HouseRepository $houseRepository;
+    private ?HouseRepository $houseRepository;
     private MessageServiceInterface $messageService;
     private string $url;
     private HouseFilter $houseFilters;
@@ -32,7 +33,7 @@ class CrawlHouseService
     ];
 
     public function __construct(
-        HouseRepository $houseRepository,
+        ?HouseRepository $houseRepository,
         MessageServiceInterface $messageService,
         string $url,
         array $options = []
@@ -82,7 +83,7 @@ class CrawlHouseService
     private function crawlHouses(): void
     {
         LogUtils::log('Crawling houses...');
-        $html      = file_get_contents($this->url);
+        $html      = HttpUtils::get($this->url);
         $houseList = $this->parseHouseList($html);
 
         foreach ($houseList as $houseItem) {
@@ -149,6 +150,10 @@ class CrawlHouseService
 
     private function saveHouses()
     {
+        if (is_null($this->houseRepository)) {
+            return;
+        }
+
         if (count($this->houses) === 0) {
             return;
         }
