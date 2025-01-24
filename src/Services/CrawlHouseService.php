@@ -165,7 +165,7 @@ class CrawlHouseService
             LogUtils::log('No new houses found!');
         }
 
-        LogUtils::log('Found new houses: ' . count($this->houses) . ', and will be sent to Discord...');
+        LogUtils::log('Found new houses: ' . count($this->houses) . ', and will be sent to ' . $this->messageService->getName() . '...');
         /** @var House $house */
         foreach ($this->houses as $house) {
             $houseDetails = new HouseDetails($house->id);

@@ -14,6 +14,11 @@ class DiscordMessageService implements MessageServiceInterface
         $this->webhook = $webhook;
     }
 
+    public function getName(): string
+    {
+        return 'Discord';
+    }
+
     public function sendHouseMessage(House $house, string $description, array $images): void
     {
         $url         = $house->getLink();

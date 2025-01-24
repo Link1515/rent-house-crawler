@@ -6,6 +6,11 @@ use Link1515\RentHouseCrawler\Entities\House;
 
 class ConsoleMessageService implements MessageServiceInterface
 {
+    public function getName(): string
+    {
+        return 'Console';
+    }
+
     public function sendHouseMessage(House $house, string $description, array $images): void
     {
         $images = join("\n", $images);
