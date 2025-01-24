@@ -73,6 +73,7 @@ class CrawlHouseService
             $this->applyHouseFilters();
             $this->filterNewHouses();
             $this->saveHouses();
+            $this->sendMessages();
 
             LogUtils::log('Done!');
         } catch (\Exception $e) {
@@ -122,6 +123,11 @@ class CrawlHouseService
 
     private function filterNewHouses()
     {
+        if (is_null($this->houseRepository)) {
+            LogUtils::log('House repository is not initialized. Return all houses...');
+            return;
+        }
+
         if ($this->houseRepository->count() === 0) {
             return;
         }
@@ -129,15 +135,7 @@ class CrawlHouseService
         $newHouses = $this->houseRepository->findNewHouses($this->houses);
         if (count($newHouses) === 0) {
             $this->houses = [];
-            LogUtils::log('No new houses found!');
             return;
-        }
-
-        LogUtils::log('Found new houses: ' . count($newHouses) . ', and will be sent to Discord...');
-        /** @var House $house */
-        foreach ($newHouses as $house) {
-            $houseDetails = new HouseDetails($house->id);
-            $this->messageService->sendHouseMessage($house, $houseDetails->description, $houseDetails->images);
         }
 
         $this->houses = $newHouses;
@@ -159,5 +157,19 @@ class CrawlHouseService
             return;
         }
         $this->houseRepository->insertHouses($this->houses);
+    }
+
+    private function sendMessages()
+    {
+        if (count($this->houses) === 0) {
+            LogUtils::log('No new houses found!');
+        }
+
+        LogUtils::log('Found new houses: ' . count($this->houses) . ', and will be sent to Discord...');
+        /** @var House $house */
+        foreach ($this->houses as $house) {
+            $houseDetails = new HouseDetails($house->id);
+            $this->messageService->sendHouseMessage($house, $houseDetails->description, $houseDetails->images);
+        }
     }
 }
