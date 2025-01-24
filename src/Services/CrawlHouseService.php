@@ -151,6 +151,7 @@ class CrawlHouseService
     private function saveHouses()
     {
         if (is_null($this->houseRepository)) {
+            LogUtils::log('House repository is not initialized. Skipping save operation...');
             return;
         }
 
