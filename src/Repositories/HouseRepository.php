@@ -2,6 +2,7 @@
 
 namespace Link1515\RentHouseCrawler\Repositories;
 
+use DateTime;
 use Link1515\RentHouseCrawler\Entities\House;
 use PDO;
 
@@ -76,6 +77,22 @@ class HouseRepository
         }
         $sql = substr($sql, 0, -2);
 
+        $this->pdo->exec($sql);
+    }
+
+    public function findHousesCreatedBefore(DateTime $dateTime): array
+    {
+        $dateTimeStr = $dateTime->format('Y-m-d H:i:s');
+        $sql         = "SELECT id FROM `{$this->tableName}` WHERE created_at < '{$dateTimeStr}'";
+        $result      = $this->pdo->query($sql);
+        $ids         = $result->fetchAll(PDO::FETCH_COLUMN);
+
+        return $ids;
+    }
+
+    public function deleteHouses(array $houseIds)
+    {
+        $sql = "DELETE FROM `{$this->tableName}` WHERE id IN (" . implode(',', $houseIds) . ')';
         $this->pdo->exec($sql);
     }
 }
