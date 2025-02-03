@@ -10,11 +10,11 @@ class ExcludeAgentFilter implements FilterInterface
 {
     public function apply(array $houses): array
     {
-        $needle = '仲介';
-        $houses = array_filter(
+        $needles = ['仲介', '代理'];
+        $houses  = array_filter(
             $houses,
-            function (House $house) use ($needle) {
-                return StringUrils::stringNotContain($house->poster, $needle);
+            function (House $house) use ($needles) {
+                return StringUrils::stringContainNone($house->title, $needles);
             }
         );
 
