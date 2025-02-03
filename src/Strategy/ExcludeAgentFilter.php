@@ -14,7 +14,7 @@ class ExcludeAgentFilter implements FilterInterface
         $houses  = array_filter(
             $houses,
             function (House $house) use ($needles) {
-                return StringUrils::stringContainNone($house->title, $needles);
+                return StringUrils::stringContainNone($house->poster, $needles);
             }
         );
 
